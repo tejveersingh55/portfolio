@@ -1,0 +1,390 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QuizMaster</title>
+
+
+<style>
+
+
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    min-height: 100vh;
+    display: grid;
+    place-items: center;
+    background: linear-gradient(135deg,#100b25,#171a3b);
+    color: white;
+    font-family: Arial,sans-serif;
+    padding: 20px;
+}
+
+.quiz-box {
+    width: 100%;
+    max-width: 600px;
+    background: #211c3b;
+    padding: 35px;
+    border-radius: 20px;
+    border: 1px solid #49406b;
+    box-shadow: 0 20px 70px #0007;
+}
+
+.brand {
+    text-align: center;
+    color: #b58aff;
+    font-weight: bold;
+    letter-spacing: 3px;
+    margin-bottom: 35px;
+}
+
+.top {
+    display: flex;
+    justify-content: space-between;
+    color: #bbb;
+    font-size: 14px;
+    margin-bottom: 18px;
+}
+
+.timer {
+    background: #44315e;
+    padding: 8px 14px;
+    border-radius: 8px;
+    color: #e3c5ff;
+}
+
+.progress {
+    height: 7px;
+    background: #443c5b;
+    border-radius: 20px;
+    margin-bottom: 30px;
+    overflow: hidden;
+}
+
+#progressBar {
+    height: 100%;
+    width: 0;
+    background: linear-gradient(90deg,#a855f7,#38bdf8);
+    transition: width .4s;
+}
+
+h2 {
+    font-size: 23px;
+    line-height: 1.5;
+    margin-bottom: 25px;
+}
+
+.option {
+    width: 100%;
+    padding: 17px;
+    background: #30294e;
+    border: 1px solid #4a416b;
+    color: white;
+    text-align: left;
+    margin: 9px 0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: .3s;
+}
+
+.option:hover:not(:disabled) {
+    border-color: #bb86fc;
+    transform: translateX(5px);
+}
+
+.option.correct {
+    background: #155b43;
+    border-color: #39d99a;
+}
+
+.option.wrong {
+    background: #712d40;
+    border-color: #ff6b83;
+}
+
+button:disabled { cursor: default; }
+
+#nextBtn, #result button {
+    width: 100%;
+    padding: 16px;
+    background: linear-gradient(90deg,#9333ea,#6366f1);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    margin-top: 25px;
+    font-size: 16px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+#nextBtn:disabled {
+    opacity: .4;
+}
+
+#result {
+    text-align: center;
+    padding: 20px 0;
+}
+
+.trophy { font-size: 75px; margin-bottom: 20px; }
+
+#result h2 {
+    font-size: 55px;
+    color: #c4a0ff;
+    margin: 20px;
+}
+
+#result p { color: #bbb; margin: 15px 0; }
+
+.hidden { display: none; }
+
+@media(max-width:500px) {
+    .quiz-box { padding: 23px; }
+    h2 { font-size: 19px; }
+}
+
+
+
+
+
+
+
+
+
+</style>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="quiz-box">
+    <div class="brand">⚡ QUIZMASTER</div>
+
+    <div id="quiz">
+        <div class="top">
+            <span id="questionNo">Question 1/10</span>
+            <span class="timer">⏱ <span id="time">15</span>s</span>
+        </div>
+
+        <div class="progress">
+            <div id="progressBar"></div>
+        </div>
+
+        <h2 id="question">Question goes here</h2>
+
+        <div id="options"></div>
+
+        <button id="nextBtn" disabled>Next Question →</button>
+    </div>
+
+    <div id="result" class="hidden">
+        <div class="trophy">🏆</div>
+        <h1>Quiz Completed!</h1>
+        <p>Your final score</p>
+        <h2 id="score">0/10</h2>
+        <p id="message"></p>
+        <button onclick="restartQuiz()">Play Again ↻</button>
+    </div>
+</div>
+
+<script>
+const questions = [
+    {
+        question: "What does HTML stand for?",
+        options: [
+            "Hyper Text Markup Language",
+            "High Text Machine Language",
+            "Hyper Tool Multi Language",
+            "Home Text Markup Language"
+        ],
+        answer: 0
+    },
+    {
+        question: "Which language is used for styling websites?",
+        options: ["Python", "CSS", "Java", "C++"],
+        answer: 1
+    },
+    {
+        question: "Which tag creates a hyperlink?",
+        options: ["<link>", "<href>", "<a>", "<url>"],
+        answer: 2
+    },
+    {
+        question: "Which symbol is used for an ID selector in CSS?",
+        options: [".", "#", "*", "&"],
+        answer: 1
+    },
+    {
+        question: "Which keyword declares a variable in JavaScript?",
+        options: ["var", "define", "int", "string"],
+        answer: 0
+    },
+    {
+        question: "Which method displays a message in the console?",
+        options: ["print()", "write()", "console.log()", "display()"],
+        answer: 2
+    },
+    {
+        question: "Which HTML tag inserts an image?",
+        options: ["<picture>", "<img>", "<image>", "<src>"],
+        answer: 1
+    },
+    {
+        question: "Which CSS property changes text color?",
+        options: ["font-style", "background", "color", "text-size"],
+        answer: 2
+    },
+    {
+        question: "Which operator checks strict equality in JavaScript?",
+        options: ["=", "==", "===", "!="],
+        answer: 2
+    },
+    {
+        question: "Which HTML element creates a form?",
+        options: ["<form>", "<input>", "<table>", "<section>"],
+        answer: 0
+    }
+];
+
+let current = 0;
+let score = 0;
+let timeLeft = 15;
+let timer;
+let answered = false;
+
+const questionEl = document.getElementById("question");
+const optionsEl = document.getElementById("options");
+const nextBtn = document.getElementById("nextBtn");
+
+function startTimer() {
+    clearInterval(timer);
+    timeLeft = 15;
+    document.getElementById("time").textContent = timeLeft;
+
+    timer = setInterval(() => {
+        timeLeft--;
+        document.getElementById("time").textContent = timeLeft;
+
+        if (timeLeft <= 0) {
+            clearInterval(timer);
+            showCorrectAnswer();
+        }
+    }, 1000);
+}
+
+function loadQuestion() {
+    answered = false;
+    nextBtn.disabled = true;
+
+    const q = questions[current];
+
+    questionEl.textContent = q.question;
+    document.getElementById("questionNo").textContent =
+        `Question ${current + 1}/${questions.length}`;
+
+    document.getElementById("progressBar").style.width =
+        `${((current + 1) / questions.length) * 100}%`;
+
+    optionsEl.innerHTML = "";
+
+    q.options.forEach((option, index) => {
+        const btn = document.createElement("button");
+        btn.className = "option";
+        btn.textContent = option;
+
+        btn.addEventListener("click", () => selectAnswer(index));
+        optionsEl.appendChild(btn);
+    });
+
+    nextBtn.textContent =
+        current === questions.length - 1 ? "Show Result →" : "Next Question →";
+
+    startTimer();
+}
+
+function selectAnswer(index) {
+    if (answered) return;
+
+    answered = true;
+    clearInterval(timer);
+
+    const correct = questions[current].answer;
+    const buttons = optionsEl.querySelectorAll(".option");
+
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+
+        if (i === correct) btn.classList.add("correct");
+        else if (i === index) btn.classList.add("wrong");
+    });
+
+    if (index === correct) score++;
+
+    nextBtn.disabled = false;
+}
+
+function showCorrectAnswer() {
+    if (answered) return;
+
+    answered = true;
+
+    const buttons = optionsEl.querySelectorAll(".option");
+    const correct = questions[current].answer;
+
+    buttons.forEach((btn, i) => {
+        btn.disabled = true;
+        if (i === correct) btn.classList.add("correct");
+    });
+
+    nextBtn.disabled = false;
+}
+
+nextBtn.addEventListener("click", () => {
+    if (!answered) return;
+
+    clearInterval(timer);
+    current++;
+
+    if (current < questions.length) {
+        loadQuestion();
+    } else {
+        showResult();
+    }
+});
+
+function showResult() {
+    document.getElementById("quiz").classList.add("hidden");
+    document.getElementById("result").classList.remove("hidden");
+
+    document.getElementById("score").textContent =
+        `${score}/${questions.length}`;
+
+    let message;
+
+    if (score >= 8) message = "Excellent! You are a Web Development Star! 🌟";
+    else if (score >= 5) message = "Good job! Keep practicing! 👍";
+    else message = "Keep learning. You can do better! 💪";
+
+    document.getElementById("message").textContent = message;
+}
+
+function restartQuiz() {
+    current = 0;
+    score = 0;
+
+    document.getElementById("quiz").classList.remove("hidden");
+    document.getElementById("result").classList.add("hidden");
+
+    loadQuestion();
+}
+
+loadQuestion();
+</script>
+</body>
+</html>

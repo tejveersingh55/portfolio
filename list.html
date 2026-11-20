@@ -1,0 +1,344 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TaskFlow - To Do List</title>
+<style>
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #100e20;
+    color: white;
+    min-height: 100vh;
+    padding: 30px 15px;
+}
+
+.app {
+    max-width: 750px;
+    margin: auto;
+}
+
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #302b48;
+    padding-bottom: 20px;
+}
+
+.logo {
+    font-size: 25px;
+    font-weight: bold;
+    color: #b58aff;
+}
+
+.date { color: #aaa; font-size: 13px; }
+
+main { padding-top: 55px; }
+
+.heading { margin-bottom: 30px; }
+
+.tag {
+    color: #b58aff;
+    font-size: 11px;
+    letter-spacing: 3px;
+}
+
+h1 {
+    font-size: 48px;
+    margin: 15px 0;
+}
+
+h1 span { color: #b58aff; }
+
+.heading p { color: #aaa; }
+
+.stats {
+    display: grid;
+    grid-template-columns: repeat(3,1fr);
+    gap: 15px;
+    margin: 30px 0;
+}
+
+.stats div {
+    background: #1c1930;
+    padding: 22px;
+    border-radius: 14px;
+    border: 1px solid #302b48;
+}
+
+.stats h2 { color: #b58aff; font-size: 28px; }
+.stats p { color: #aaa; font-size: 13px; margin-top: 7px; }
+
+#taskForm {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+input {
+    flex: 1;
+    min-width: 0;
+    padding: 17px;
+    background: #1c1930;
+    border: 1px solid #40385c;
+    border-radius: 10px;
+    color: white;
+    outline: none;
+}
+
+input:focus { border-color: #b58aff; }
+
+button {
+    cursor: pointer;
+    border: none;
+    border-radius: 9px;
+    padding: 13px 20px;
+    font-weight: bold;
+}
+
+#taskForm button {
+    background: #a66cff;
+    color: white;
+}
+
+.filters {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.filter {
+    background: #211d38;
+    color: #aaa;
+}
+
+.filter.active {
+    background: #a66cff;
+    color: white;
+}
+
+.task {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    background: #1c1930;
+    padding: 17px;
+    border: 1px solid #302b48;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    animation: appear .3s ease;
+}
+
+.task-text { flex: 1; overflow-wrap: anywhere; }
+
+.task.done .task-text {
+    text-decoration: line-through;
+    color: #777;
+}
+
+.check {
+    width: 21px;
+    height: 21px;
+    accent-color: #a66cff;
+    cursor: pointer;
+}
+
+.delete {
+    background: #492532;
+    color: #ff8da5;
+    padding: 9px 12px;
+}
+
+.empty {
+    color: #777;
+    text-align: center;
+    padding: 35px;
+}
+
+.footer {
+    text-align: center;
+    color: #777;
+    margin-top: 45px;
+    font-size: 13px;
+}
+
+@keyframes appear {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@media(max-width:500px) {
+    h1 { font-size: 37px; }
+    #taskForm { flex-direction: column; }
+    .stats div { padding: 15px 8px; }
+    .stats h2 { font-size: 23px; }
+    .stats p { font-size: 11px; }
+}
+
+
+
+
+
+
+
+
+
+
+
+</style>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<div class="app">
+    <header>
+        <div class="logo">✦ TaskFlow</div>
+        <span class="date" id="date"></span>
+    </header>
+
+    <main>
+        <div class="heading">
+            <span class="tag">YOUR PERSONAL PLANNER</span>
+            <h1>Get things <span>done.</span></h1>
+            <p>Organize your day, one task at a time.</p>
+        </div>
+
+        <div class="stats">
+            <div><h2 id="total">0</h2><p>Total Tasks</p></div>
+            <div><h2 id="completed">0</h2><p>Completed</p></div>
+            <div><h2 id="pending">0</h2><p>Pending</p></div>
+        </div>
+
+        <form id="taskForm">
+            <input type="text" id="taskInput" placeholder="What needs to be done?" required>
+            <button type="submit">+ Add Task</button>
+        </form>
+
+        <div class="filters">
+            <button class="filter active" data-filter="all">All</button>
+            <button class="filter" data-filter="pending">Pending</button>
+            <button class="filter" data-filter="completed">Completed</button>
+        </div>
+
+        <div id="taskList"></div>
+        <p class="footer">Made with ♥ | TaskFlow</p>
+    </main>
+</div>
+<script>
+
+
+const taskForm = document.getElementById("taskForm");
+const taskInput = document.getElementById("taskInput");
+const taskList = document.getElementById("taskList");
+
+let tasks = JSON.parse(localStorage.getItem("tasks")) || [];
+let currentFilter = "all";
+
+document.getElementById("date").textContent =
+    new Date().toDateString();
+
+function saveTasks() {
+    localStorage.setItem("tasks", JSON.stringify(tasks));
+}
+
+function updateStats() {
+    document.getElementById("total").textContent = tasks.length;
+
+    const done = tasks.filter(t => t.completed).length;
+
+    document.getElementById("completed").textContent = done;
+    document.getElementById("pending").textContent = tasks.length - done;
+}
+
+function renderTasks() {
+    taskList.innerHTML = "";
+
+    let filtered = tasks.filter(task => {
+        if (currentFilter === "completed") return task.completed;
+        if (currentFilter === "pending") return !task.completed;
+        return true;
+    });
+
+    if (filtered.length === 0) {
+        taskList.innerHTML = '<div class="empty">✨ No tasks here. Add one!</div>';
+    }
+
+    filtered.forEach(task => {
+        const div = document.createElement("div");
+        div.className = "task" + (task.completed ? " done" : "");
+
+        const check = document.createElement("input");
+        check.type = "checkbox";
+        check.className = "check";
+        check.checked = task.completed;
+
+        check.addEventListener("change", () => {
+            task.completed = check.checked;
+            saveTasks();
+            renderTasks();
+        });
+
+        const text = document.createElement("span");
+        text.className = "task-text";
+        text.textContent = task.text;
+
+        const del = document.createElement("button");
+        del.className = "delete";
+        del.textContent = "Delete";
+
+        del.addEventListener("click", () => {
+            tasks = tasks.filter(t => t.id !== task.id);
+            saveTasks();
+            renderTasks();
+        });
+
+        div.append(check, text, del);
+        taskList.appendChild(div);
+    });
+
+    updateStats();
+}
+
+taskForm.addEventListener("submit", e => {
+    e.preventDefault();
+
+    const text = taskInput.value.trim();
+    if (!text) return;
+
+    tasks.push({
+        id: Date.now(),
+        text: text,
+        completed: false
+    });
+
+    taskInput.value = "";
+    saveTasks();
+    renderTasks();
+});
+
+document.querySelectorAll(".filter").forEach(btn => {
+    btn.addEventListener("click", () => {
+        document.querySelector(".filter.active").classList.remove("active");
+        btn.classList.add("active");
+        currentFilter = btn.dataset.filter;
+        renderTasks();
+    });
+});
+
+renderTasks();
+
+
+
+
+
+</script>
+</body>
+</html>
